@@ -53,8 +53,13 @@ app.post('/api/send-webhook', async (req, res) => {
       const isUrgent = message.includes('緊急') || message.includes('売却推奨');
       const mention = '@everyone';
       
+      // モバイル通知を確実にするための対策
+      const mobileMessage = isUrgent 
+        ? `🚨 **緊急** 🚨\n${mention}\n\n${message}\n\n**今すぐ確認してください！**`
+        : `${mention}\n\n${message}`;
+        
       payload = {
-        content: `${mention}\n${message}`,
+        content: mobileMessage,
         username: 'Crypto Trade Advisor',
         avatar_url: 'https://cdn-icons-png.flaticon.com/512/6001/6001283.png',
         allowed_mentions: { parse: ['everyone'] },
@@ -68,7 +73,14 @@ app.post('/api/send-webhook', async (req, res) => {
             footer: {
               text: 'Crypto Trade Advisor',
               icon_url: 'https://cdn-icons-png.flaticon.com/512/6001/6001283.png'
-            }
+            },
+            fields: [
+              {
+                name: '通知時刻',
+                value: new Date().toLocaleString('ja-JP'),
+                inline: true
+              }
+            ]
           }
         ]
       };
