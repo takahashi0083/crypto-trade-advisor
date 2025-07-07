@@ -97,6 +97,21 @@
   border: 1px solid #00ff88;
 }
 
+.signal-card.additional-purchase {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
+  border: 1px solid #4a90e2;
+}
+
+.additional-badge {
+  background: #4a90e2;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+}
+
 .sell-signal {
   background: linear-gradient(135deg, #fff5f5, #ffebeb);
   border: 1px solid #ff4444;

@@ -132,45 +132,49 @@ export const TradeSignals = () => {
           総合スコア: compositeScore.toFixed(1)
         });
         
-        // 買いシグナル
-        if (!asset) {
-          const buyCondition = compositeScore > thresholds.buy || 
-                              (compositeSignal.action === 'BUY' && compositeSignal.confidence > 70) ||
-                              rsi < 25 || 
-                              (fgi && fgi.value < 20);
+        // 買いシグナル（保有・未保有問わず判定）
+        const buyCondition = compositeScore > thresholds.buy || 
+                            (compositeSignal.action === 'BUY' && compositeSignal.confidence > 70) ||
+                            rsi < 25 || 
+                            (fgi && fgi.value < 20);
+        
+        console.log(`${price.symbol} 買いシグナル判定:`, {
+          保有状態: asset ? '保有中' : '未保有',
+          compositeScore: compositeScore.toFixed(1),
+          threshold_buy: thresholds.buy,
+          score_over_threshold: compositeScore > thresholds.buy,
+          mtf_action: compositeSignal.action,
+          mtf_confidence: compositeSignal.confidence,
+          mtf_buy_condition: compositeSignal.action === 'BUY' && compositeSignal.confidence > 70,
+          rsi,
+          rsi_oversold: rsi < 25,
+          fgi_value: fgi?.value,
+          fgi_fear: fgi && fgi.value < 20,
+          final_buy_condition: buyCondition
+        });
+        
+        if (buyCondition) {
+          action = 'BUY';
           
-          console.log(`${price.symbol} 買いシグナル判定:`, {
-            compositeScore: compositeScore.toFixed(1),
-            threshold_buy: thresholds.buy,
-            score_over_threshold: compositeScore > thresholds.buy,
-            mtf_action: compositeSignal.action,
-            mtf_confidence: compositeSignal.confidence,
-            mtf_buy_condition: compositeSignal.action === 'BUY' && compositeSignal.confidence > 70,
-            rsi,
-            rsi_oversold: rsi < 25,
-            fgi_value: fgi?.value,
-            fgi_fear: fgi && fgi.value < 20,
-            final_buy_condition: buyCondition
-          });
-          
-          if (buyCondition) {
-            action = 'BUY';
-            
-            // マルチタイムフレーム分析の理由
-            if (compositeSignal.action === 'BUY' && compositeSignal.confidence > 70) {
-              reasons.push(...compositeSignal.reasons);
-            }
-            
-            if (rsi < 25) reasons.push(`RSI: ${rsi.toFixed(0)} (極度の売られすぎ)`);
-            else if (rsi < 35) reasons.push(`RSI: ${rsi.toFixed(0)} (売られすぎ)`);
-            if (price.price < bollinger.lower) reasons.push('ボリンジャーバンド下限突破');
-            if (fgi && fgi.value < 20) reasons.push(`市場心理: 極度の恐怖 (${fgi.value})`);
-            else if (fgi && fgi.value < 30) reasons.push(`市場心理: ${fgi.classification}`);
-            if (price.change24h < -10) reasons.push(`大幅下落: ${price.change24h.toFixed(1)}%`);
-            else if (price.change24h < -5) reasons.push(`24h変動: ${price.change24h.toFixed(1)}%`);
-            if (compositeScore > 80) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (非常に強い買いシグナル)`);
-            else if (compositeScore > thresholds.buy) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (買いシグナル)`);
+          // 保有状態に応じたメッセージ
+          if (asset) {
+            reasons.push(`追加購入推奨 (現在の含み損益: ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%)`);
           }
+          
+          // マルチタイムフレーム分析の理由
+          if (compositeSignal.action === 'BUY' && compositeSignal.confidence > 70) {
+            reasons.push(...compositeSignal.reasons);
+          }
+          
+          if (rsi < 25) reasons.push(`RSI: ${rsi.toFixed(0)} (極度の売られすぎ)`);
+          else if (rsi < 35) reasons.push(`RSI: ${rsi.toFixed(0)} (売られすぎ)`);
+          if (price.price < bollinger.lower) reasons.push('ボリンジャーバンド下限突破');
+          if (fgi && fgi.value < 20) reasons.push(`市場心理: 極度の恐怖 (${fgi.value})`);
+          else if (fgi && fgi.value < 30) reasons.push(`市場心理: ${fgi.classification}`);
+          if (price.change24h < -10) reasons.push(`大幅下落: ${price.change24h.toFixed(1)}%`);
+          else if (price.change24h < -5) reasons.push(`24h変動: ${price.change24h.toFixed(1)}%`);
+          if (compositeScore > 80) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (非常に強い買いシグナル)`);
+          else if (compositeScore > thresholds.buy) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (買いシグナル)`);
         }
         
         // 売りシグナル
@@ -207,7 +211,7 @@ export const TradeSignals = () => {
           action,
           score: Math.round(compositeScore), // 総合スコアを使用
           reasons: [...new Set(reasons)], // 重複を除去
-          suggestedAmount: action === 'BUY' ? 50000 : undefined,
+          suggestedAmount: action === 'BUY' ? (asset ? 30000 : 50000) : undefined, // 追加購入は少なめ
           suggestedPercentage: action === 'SELL' ? 30 : undefined,
           confidence: compositeScore > 80 ? 'HIGH' : compositeScore > 60 ? 'MEDIUM' : 'LOW',
           timestamp: new Date(),
@@ -222,6 +226,7 @@ export const TradeSignals = () => {
           action, 
           score: Math.round(compositeScore), 
           reasons,
+          保有状態: asset ? `保有中(${profitPercent.toFixed(1)}%)` : '未保有',
           thresholds: { buy: thresholds.buy, sell: thresholds.sell }
         });
         
@@ -375,14 +380,21 @@ export const TradeSignals = () => {
           {buySignals.length === 0 ? (
             <p className="no-signals">現在買い推奨はありません</p>
           ) : (
-            buySignals.slice(0, 3).map(signal => (
-              <div key={signal.symbol} className="signal-card buy-signal">
-                <div className="signal-header">
-                  <h3>{signal.symbol}</h3>
-                  <span className={`confidence ${signal.confidence.toLowerCase()}`}>
-                    {signal.confidence}
-                  </span>
-                </div>
+            buySignals.slice(0, 3).map(signal => {
+              const asset = assets.find(a => a.symbol === signal.symbol);
+              const isAdditionalPurchase = asset !== undefined;
+              
+              return (
+                <div key={signal.symbol} className={`signal-card buy-signal ${isAdditionalPurchase ? 'additional-purchase' : ''}`}>
+                  <div className="signal-header">
+                    <h3>
+                      {signal.symbol}
+                      {isAdditionalPurchase && <span className="additional-badge">追加</span>}
+                    </h3>
+                    <span className={`confidence ${signal.confidence.toLowerCase()}`}>
+                      {signal.confidence}
+                    </span>
+                  </div>
                 <div className="signal-score">
                   <div className="score-bar">
                     <div className="score-fill" style={{ width: `${signal.score}%` }} />
@@ -394,13 +406,14 @@ export const TradeSignals = () => {
                     <div key={i} className="reason">✓ {reason}</div>
                   ))}
                 </div>
-                {signal.suggestedAmount && (
-                  <div className="suggested-amount">
-                    推奨購入額: ¥{signal.suggestedAmount.toLocaleString()}
-                  </div>
-                )}
-              </div>
-            ))
+                  {signal.suggestedAmount && (
+                    <div className="suggested-amount">
+                      {isAdditionalPurchase ? '追加購入推奨額' : '推奨購入額'}: ¥{signal.suggestedAmount.toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
         
