@@ -4,21 +4,17 @@ import type { CryptoAsset } from '../types/crypto';
 import './AssetForm.css';
 
 const CRYPTO_OPTIONS = [
-  { symbol: 'BTC', name: 'Bitcoin' },
-  { symbol: 'ETH', name: 'Ethereum' },
-  { symbol: 'BNB', name: 'Binance Coin' },
-  { symbol: 'XRP', name: 'Ripple' },
-  { symbol: 'ADA', name: 'Cardano' },
-  { symbol: 'SOL', name: 'Solana' },
-  { symbol: 'DOGE', name: 'Dogecoin' },
-  { symbol: 'MATIC', name: 'Polygon' },
+  { symbol: 'BTC', name: 'ビットコイン' },
+  { symbol: 'ETH', name: 'イーサリアム' },
+  { symbol: 'XRP', name: 'リップル' },
+  { symbol: 'LTC', name: 'ライトコイン' },
+  { symbol: 'BCH', name: 'ビットコインキャッシュ' },
+  { symbol: 'ADA', name: 'カルダノ' },
 ];
 
 export const AssetForm = () => {
-  const { addAsset, removeAsset, assets } = useStore();
+  const { addAsset, removeAsset, assets, prices } = useStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [currency, setCurrency] = useState<'USD' | 'JPY'>('USD');
-  const [usdJpyRate, setUsdJpyRate] = useState(150); // デフォルトレート
   // 日本時間で今日の日付を取得
   const getTodayJST = () => {
     const now = new Date();
@@ -30,24 +26,26 @@ export const AssetForm = () => {
   const [formData, setFormData] = useState({
     symbol: 'BTC',
     amount: '',
-    purchasePrice: '',
     purchaseDate: getTodayJST()
   });
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // USD入力の場合は円に変換
-    const priceInJpy = currency === 'USD' 
-      ? parseFloat(formData.purchasePrice) * usdJpyRate
-      : parseFloat(formData.purchasePrice);
+    // 選択された通貨の現在価格を取得
+    const currentPrice = prices.find(p => p.symbol === formData.symbol);
+    
+    if (!currentPrice) {
+      alert('現在の価格を取得できません。しばらくお待ちください。');
+      return;
+    }
     
     const newAsset: CryptoAsset = {
       id: Date.now().toString(),
       symbol: formData.symbol,
       name: CRYPTO_OPTIONS.find(c => c.symbol === formData.symbol)?.name || formData.symbol,
       amount: parseFloat(formData.amount),
-      purchasePrice: priceInJpy,
+      purchasePrice: currentPrice.price, // アプリ内の現在価格を使用
       purchaseDate: new Date(formData.purchaseDate)
     };
     
@@ -57,7 +55,6 @@ export const AssetForm = () => {
     setFormData({
       symbol: 'BTC',
       amount: '',
-      purchasePrice: '',
       purchaseDate: getTodayJST()
     });
     setIsOpen(false);
@@ -97,69 +94,40 @@ export const AssetForm = () => {
             </select>
           </div>
           
-          <div className="form-row">
-            <div className="form-group">
-              <label>保有量</label>
-              <input
-                type="number"
-                step="0.00000001"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="1.5"
-                required
-              />
+          <div className="form-group">
+            <label>保有量</label>
+            <input
+              type="number"
+              step="0.00000001"
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              placeholder="0.001"
+              required
+            />
+            <small style={{ color: '#666', fontSize: '0.8rem' }}>
+              例: 0.001 BTC
+            </small>
+          </div>
+          
+          <div className="form-group">
+            <label>現在価格（アプリ内価格）</label>
+            <div className="current-price-display">
+              {(() => {
+                const price = prices.find(p => p.symbol === formData.symbol);
+                return price ? (
+                  <div>
+                    <div className="price-main">
+                      ¥{price.price.toLocaleString()}
+                    </div>
+                    <small style={{ color: '#666' }}>
+                      1{formData.symbol}あたりの価格
+                    </small>
+                  </div>
+                ) : (
+                  <div style={{ color: '#999' }}>価格を取得中...</div>
+                );
+              })()}
             </div>
-            
-            <div className="form-group">
-              <label>
-                購入時の1枚あたり価格
-                <div className="currency-toggle">
-                  <button
-                    type="button"
-                    className={`currency-btn ${currency === 'USD' ? 'active' : ''}`}
-                    onClick={() => setCurrency('USD')}
-                  >
-                    USD
-                  </button>
-                  <button
-                    type="button"
-                    className={`currency-btn ${currency === 'JPY' ? 'active' : ''}`}
-                    onClick={() => setCurrency('JPY')}
-                  >
-                    JPY
-                  </button>
-                </div>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.purchasePrice}
-                onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })}
-                placeholder={currency === 'USD' ? '35000' : '5000000'}
-                required
-              />
-              <small style={{ color: '#666', fontSize: '0.8rem' }}>
-                {currency === 'USD' 
-                  ? `例: 1BTC = $35,000の時は「35000」（レート: 1USD = ${usdJpyRate}円）`
-                  : '例: 1BTC = 500万円の時は「5000000」'}
-              </small>
-            </div>
-            
-            {currency === 'USD' && (
-              <div className="form-group">
-                <label>USD/JPY レート</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={usdJpyRate}
-                  onChange={(e) => setUsdJpyRate(parseFloat(e.target.value) || 150)}
-                  required
-                />
-                <small style={{ color: '#666', fontSize: '0.8rem' }}>
-                  現在のレートを入力（デフォルト: 150円）
-                </small>
-              </div>
-            )}
           </div>
           
           <div className="form-group">
@@ -173,8 +141,25 @@ export const AssetForm = () => {
             />
           </div>
           
+          {formData.amount && (() => {
+            const price = prices.find(p => p.symbol === formData.symbol);
+            const amount = parseFloat(formData.amount);
+            if (price && !isNaN(amount)) {
+              const total = price.price * amount;
+              return (
+                <div className="total-price-display">
+                  <label>合計購入金額</label>
+                  <div className="total-price">
+                    ¥{total.toLocaleString()}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+          
           <button type="submit" className="submit-button">
-            追加する
+            現在価格で記録する
           </button>
         </form>
       )}
