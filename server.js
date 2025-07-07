@@ -53,36 +53,13 @@ app.post('/api/send-webhook', async (req, res) => {
       const isUrgent = message.includes('緊急') || message.includes('売却推奨');
       const mention = '@everyone';
       
-      // モバイル通知を確実にするための対策
-      const mobileMessage = isUrgent 
-        ? `🚨 **緊急** 🚨\n${mention}\n\n${message}\n\n**今すぐ確認してください！**`
-        : `${mention}\n\n${message}`;
-        
+      // iPhoneの通知バーに表示されるようシンプルな形式にする
       payload = {
-        content: mobileMessage,
+        content: `@everyone\n${message}`,
         username: 'Crypto Trade Advisor',
         avatar_url: 'https://cdn-icons-png.flaticon.com/512/6001/6001283.png',
         allowed_mentions: { parse: ['everyone'] },
-        tts: true,  // Text-to-Speechを有効化（音声読み上げ）
-        embeds: [
-          {
-            title: isUrgent ? '🚨 緊急通知 🚨' : '📱 通知',
-            description: message,
-            color: isUrgent ? 0xFF0000 : 0x00FF00,  // 赤色または緑色
-            timestamp: new Date().toISOString(),
-            footer: {
-              text: 'Crypto Trade Advisor',
-              icon_url: 'https://cdn-icons-png.flaticon.com/512/6001/6001283.png'
-            },
-            fields: [
-              {
-                name: '通知時刻',
-                value: new Date().toLocaleString('ja-JP'),
-                inline: true
-              }
-            ]
-          }
-        ]
+        tts: true  // Text-to-Speechを有効化（音声読み上げ）
       };
     }
     // Slack webhook
@@ -128,24 +105,13 @@ app.post('/api/test-webhook', async (req, res) => {
     let payload;
     
     if (webhookUrl.includes('discord.com')) {
+      // iPhoneの通知バーに表示されるようシンプルな形式にする
       payload = {
         content: `@everyone\n${testMessage}`,
         username: 'Crypto Trade Advisor',
         avatar_url: 'https://cdn-icons-png.flaticon.com/512/6001/6001283.png',
         allowed_mentions: { parse: ['everyone'] },
-        tts: true,  // テスト通知でもTTSを有効化
-        embeds: [
-          {
-            title: '📱 テスト通知',
-            description: testMessage,
-            color: 0x00FF00,  // 緑色
-            timestamp: new Date().toISOString(),
-            footer: {
-              text: 'Crypto Trade Advisor',
-              icon_url: 'https://cdn-icons-png.flaticon.com/512/6001/6001283.png'
-            }
-          }
-        ]
+        tts: true  // テスト通知でもTTSを有効化
       };
     } else if (webhookUrl.includes('slack.com')) {
       payload = {
