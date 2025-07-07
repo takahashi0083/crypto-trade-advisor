@@ -19,9 +19,11 @@ export const AssetForm = () => {
   // 日本時間で今日の日付を取得
   const getTodayJST = () => {
     const now = new Date();
-    const jstOffset = 9 * 60; // JST is UTC+9
-    const jstTime = new Date(now.getTime() + (jstOffset - now.getTimezoneOffset()) * 60 * 1000);
-    return jstTime.toISOString().split('T')[0];
+    // 日本時間の文字列を作成（YYYY-MM-DD形式）
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
   
   const [formData, setFormData] = useState({
