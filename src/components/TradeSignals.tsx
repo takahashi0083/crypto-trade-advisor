@@ -79,16 +79,6 @@ export const TradeSignals = () => {
           priceChange24h: price.change24h
         };
         
-        console.log(`${price.symbol} 指標:`, {
-          現在価格: price.price.toLocaleString(),
-          RSI: rsi.toFixed(1),
-          SMA20: sma20.toLocaleString(),
-          ボリンジャー上: bollinger.upper.toLocaleString(),
-          ボリンジャー下: bollinger.lower.toLocaleString(),
-          単独スコア: score,
-          総合スコア: compositeScore.toFixed(1)
-        });
-        
         const score = TechnicalAnalysis.calculateSignalScore(indicators, price.price);
         
         // 保有資産の確認
@@ -114,6 +104,16 @@ export const TradeSignals = () => {
         const mtfWeight = 0.3; // マルチタイムフレームの重み
         const technicalWeight = 0.7; // テクニカル指標の重み
         const compositeScore = (score * technicalWeight) + (compositeSignal.confidence * mtfWeight);
+        
+        console.log(`${price.symbol} 指標:`, {
+          現在価格: price.price.toLocaleString(),
+          RSI: rsi.toFixed(1),
+          SMA20: sma20.toLocaleString(),
+          ボリンジャー上: bollinger.upper.toLocaleString(),
+          ボリンジャー下: bollinger.lower.toLocaleString(),
+          単独スコア: score,
+          総合スコア: compositeScore.toFixed(1)
+        });
         
         // 買いシグナル
         if (!asset) {
