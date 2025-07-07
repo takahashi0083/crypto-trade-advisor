@@ -139,6 +139,20 @@ export const TradeSignals = () => {
                               rsi < 25 || 
                               (fgi && fgi.value < 20);
           
+          console.log(`${price.symbol} 買いシグナル判定:`, {
+            compositeScore: compositeScore.toFixed(1),
+            threshold_buy: thresholds.buy,
+            score_over_threshold: compositeScore > thresholds.buy,
+            mtf_action: compositeSignal.action,
+            mtf_confidence: compositeSignal.confidence,
+            mtf_buy_condition: compositeSignal.action === 'BUY' && compositeSignal.confidence > 70,
+            rsi,
+            rsi_oversold: rsi < 25,
+            fgi_value: fgi?.value,
+            fgi_fear: fgi && fgi.value < 20,
+            final_buy_condition: buyCondition
+          });
+          
           if (buyCondition) {
             action = 'BUY';
             
@@ -212,8 +226,18 @@ export const TradeSignals = () => {
         });
         
         // 通知の送信
+        console.log(`${price.symbol} 通知設定:`, notificationSettings);
+        
         if (notificationSettings.enabled) {
           // 買いシグナル通知
+          console.log(`${price.symbol} 通知判定:`, {
+            action,
+            compositeScore: compositeScore.toFixed(1),
+            over_threshold: compositeScore > thresholds.buy,
+            notifications_enabled: notificationSettings.buySignals,
+            will_notify: action === 'BUY' && compositeScore > thresholds.buy && notificationSettings.buySignals
+          });
+          
           if (action === 'BUY' && compositeScore > thresholds.buy && notificationSettings.buySignals) {
             // クールダウンチェック
             if (NotificationCooldown.canSendNotification(price.symbol, 'BUY')) {
