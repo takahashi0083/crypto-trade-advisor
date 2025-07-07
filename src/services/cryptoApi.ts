@@ -6,17 +6,35 @@ const BINANCE_API = 'https://api.binance.com/api/v3';
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'LTCUSDT', 'BCHUSDT', 'ADAUSDT'];
 
 export class CryptoApiService {
-  // リアルタイムの為替レートを取得
+  // 為替レートのキャッシュ
+  private static cachedRate: number | null = null;
+  private static cacheTimestamp: number = 0;
+  private static readonly CACHE_DURATION = 60 * 60 * 1000; // 1時間
+  
+  // キャッシュされた為替レートを取得
   static async getUSDJPYRate(): Promise<number> {
+    const now = Date.now();
+    
+    // キャッシュが有効な場合はそれを使用
+    if (this.cachedRate && (now - this.cacheTimestamp) < this.CACHE_DURATION) {
+      console.log('Using cached USD/JPY rate:', this.cachedRate);
+      return this.cachedRate;
+    }
+    
     try {
-      // 無料の為替レートAPI（日次更新）
+      // 新しいレートを取得
       const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
       const rate = response.data.rates.JPY;
-      console.log('Current USD/JPY rate:', rate);
+      
+      // キャッシュを更新
+      this.cachedRate = rate;
+      this.cacheTimestamp = now;
+      
+      console.log('Fetched new USD/JPY rate:', rate);
       return rate;
     } catch (error) {
-      console.error('為替レート取得エラー、デフォルト値を使用:', error);
-      return 157; // フォールバック値
+      console.error('為替レート取得エラー、キャッシュまたはデフォルト値を使用:', error);
+      return this.cachedRate || 157; // キャッシュまたはフォールバック値
     }
   }
 

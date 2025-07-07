@@ -72,17 +72,29 @@ export const TradeSignals = () => {
         });
         
         // 終値の配列を作成（JPY換算）
-        const USD_TO_JPY = 157;
-        const historicalPrices = historicalData.map((d: any) => d.close * USD_TO_JPY);
+        // 履歴データは固定レートで統一し、最新価格のみリアルタイムレートを使用
+        const FIXED_USD_TO_JPY = 157; // 履歴データ用の固定レート
+        const historicalPrices = historicalData.map((d: any) => d.close * FIXED_USD_TO_JPY);
         
         // 最新価格を現在価格に更新（リアルタイム反映）
         const originalLastPrice = historicalPrices[historicalPrices.length - 1];
         historicalPrices[historicalPrices.length - 1] = price.price;
         
+        // 価格更新のログ出力（ただし為替変動の影響を考慮）
+        const priceChangeFromHistorical = ((price.price - originalLastPrice) / originalLastPrice * 100);
+        
+        // 為替変動の影響を除外したUSDベースの変化率を計算
+        const usdRate = await CryptoApiService.getUSDJPYRate();
+        const currentPriceUSD = price.price / usdRate;
+        const historicalPriceUSD = originalLastPrice / FIXED_USD_TO_JPY;
+        const usdChangePercent = ((currentPriceUSD - historicalPriceUSD) / historicalPriceUSD * 100);
+        
         console.log(`${price.symbol} 価格更新:`, {
           元の最新価格: Math.round(originalLastPrice),
           現在の価格: Math.round(price.price),
-          変化率: ((price.price - originalLastPrice) / originalLastPrice * 100).toFixed(3) + '%'
+          JPY変化率: priceChangeFromHistorical.toFixed(3) + '%',
+          USD変化率: usdChangePercent.toFixed(3) + '%',
+          為替レート: usdRate
         });
         
         // テクニカル指標の計算
