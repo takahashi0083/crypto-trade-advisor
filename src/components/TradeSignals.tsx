@@ -31,9 +31,23 @@ export const TradeSignals = () => {
       
       // 各通貨のシグナルを生成
       for (const price of prices) {
+        console.log(`${price.symbol}: マルチタイムフレーム分析開始...`);
+        
         // マルチタイムフレーム分析
-        const mtfSignals = await MultiTimeframeAnalysis.analyzeMultipleTimeframes(price.symbol);
-        const compositeSignal = MultiTimeframeAnalysis.generateCompositeSignal(mtfSignals);
+        let mtfSignals;
+        let compositeSignal;
+        
+        try {
+          mtfSignals = await MultiTimeframeAnalysis.analyzeMultipleTimeframes(price.symbol);
+          console.log(`${price.symbol} MTF結果:`, mtfSignals);
+          compositeSignal = MultiTimeframeAnalysis.generateCompositeSignal(mtfSignals);
+          console.log(`${price.symbol} 統合シグナル:`, compositeSignal);
+        } catch (error) {
+          console.error(`${price.symbol} マルチタイムフレーム分析エラー:`, error);
+          // エラー時のデフォルト値
+          mtfSignals = [];
+          compositeSignal = { action: 'HOLD', confidence: 50, reasons: [] };
+        }
         
         // 実際の履歴データを取得（4時間足、30本 = 5日分）
         const historicalData = await CryptoApiService.getHistoricalPrices(price.symbol, '4h', 30);
@@ -70,7 +84,9 @@ export const TradeSignals = () => {
           RSI: rsi.toFixed(1),
           SMA20: sma20.toLocaleString(),
           ボリンジャー上: bollinger.upper.toLocaleString(),
-          ボリンジャー下: bollinger.lower.toLocaleString()
+          ボリンジャー下: bollinger.lower.toLocaleString(),
+          単独スコア: score,
+          総合スコア: compositeScore.toFixed(1)
         });
         
         const score = TechnicalAnalysis.calculateSignalScore(indicators, price.price);
@@ -82,9 +98,17 @@ export const TradeSignals = () => {
         let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
         let reasons: string[] = [];
         
-        // 過去のスコアから動的しきい値を計算（仮に過去のスコアを使用）
-        const historicalScores = prices.map(p => TechnicalAnalysis.calculateSignalScore(indicators, p.price));
-        const thresholds = TechnicalAnalysis.calculateDynamicThresholds(historicalScores);
+        // 過去のスコアから動的しきい値を計算
+        // 本来は過去のスコア履歴を保存して使用すべきですが、今回は簡易的に現在の指標から計算
+        const mockHistoricalScores = [];
+        for (let i = 0; i < 30; i++) {
+          // RSIと価格位置からモックスコアを生成
+          const mockRsi = 30 + Math.random() * 40; // 30-70の範囲
+          const mockIndicators = { ...indicators, rsi: mockRsi };
+          mockHistoricalScores.push(TechnicalAnalysis.calculateSignalScore(mockIndicators, price.price));
+        }
+        const thresholds = TechnicalAnalysis.calculateDynamicThresholds(mockHistoricalScores);
+        console.log(`${price.symbol} 動的しきい値:`, thresholds);
         
         // マルチタイムフレーム分析の統合
         const mtfWeight = 0.3; // マルチタイムフレームの重み
@@ -162,7 +186,13 @@ export const TradeSignals = () => {
         };
         
         newSignals.push(signal);
-        console.log('Signal generated:', { symbol: price.symbol, action, score, reasons });
+        console.log('Signal generated:', { 
+          symbol: price.symbol, 
+          action, 
+          score: Math.round(compositeScore), 
+          reasons,
+          thresholds: { buy: thresholds.buy, sell: thresholds.sell }
+        });
         
         // 通知の送信
         if (notificationSettings.enabled) {

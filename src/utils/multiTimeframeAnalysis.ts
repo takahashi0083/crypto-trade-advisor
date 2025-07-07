@@ -17,13 +17,14 @@ export class MultiTimeframeAnalysis {
   // 複数の時間枠で分析
   static async analyzeMultipleTimeframes(
     symbol: string,
-    timeframes: string[] = ['15m', '1h', '4h', '1d']
+    timeframes: string[] = ['1h', '4h'] // API負荷軽減のため、2つの時間枠に縮小
   ): Promise<TimeframeSignal[]> {
     const results: TimeframeSignal[] = [];
     const USD_TO_JPY = 157;
     
     for (const timeframe of timeframes) {
       try {
+        console.log(`  ${symbol} - ${timeframe} データ取得中...`);
         // 各時間枠に応じた本数を取得
         const limit = this.getCandelLimit(timeframe);
         const historicalData = await CryptoApiService.getHistoricalPrices(symbol, timeframe, limit);
@@ -59,7 +60,7 @@ export class MultiTimeframeAnalysis {
           }
         });
       } catch (error) {
-        console.error(`${timeframe}の分析エラー:`, error);
+        console.error(`${symbol} - ${timeframe}の分析エラー:`, error);
       }
     }
     
@@ -138,11 +139,11 @@ export class MultiTimeframeAnalysis {
       return { action: 'HOLD', confidence: 0, reasons: ['データ不足'] };
     }
     
-    // 時間枠ごとの重み
+    // 時間枠ごとの重み（簡略化）
     const weights: { [key: string]: number } = {
       '15m': 0.1,
-      '1h': 0.2,
-      '4h': 0.4,
+      '1h': 0.4,
+      '4h': 0.6,
       '1d': 0.3
     };
     
