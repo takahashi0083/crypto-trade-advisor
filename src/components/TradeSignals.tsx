@@ -28,15 +28,22 @@ export const TradeSignals = () => {
       
       // 各通貨のシグナルを生成
       for (const price of prices) {
-        // 仮の履歴データ（実際はAPIから取得）
-        const historicalPrices = Array(30).fill(0).map(() => 
-          price.price * (1 + (Math.random() - 0.5) * 0.02)
-        );
+        // 実際の履歴データを取得（4時間足、30本 = 5日分）
+        const historicalData = await CryptoApiService.getHistoricalPrices(price.symbol, '4h', 30);
+        
+        if (historicalData.length < 20) {
+          console.log(`${price.symbol}: 履歴データ不足`);
+          continue;
+        }
+        
+        // 終値の配列を作成（JPY換算）
+        const USD_TO_JPY = 150;
+        const historicalPrices = historicalData.map((d: any) => d.close * USD_TO_JPY);
         
         // テクニカル指標の計算
         const rsi = TechnicalAnalysis.calculateRSI(historicalPrices);
         const sma20 = TechnicalAnalysis.calculateSMA(historicalPrices, 20);
-        const sma50 = TechnicalAnalysis.calculateSMA(historicalPrices, 50);
+        const sma50 = historicalPrices.length >= 50 ? TechnicalAnalysis.calculateSMA(historicalPrices, 50) : sma20;
         const bollinger = TechnicalAnalysis.calculateBollingerBands(historicalPrices);
         
         const indicators = {
@@ -49,6 +56,14 @@ export const TradeSignals = () => {
           bollingerUpper: bollinger.upper,
           bollingerLower: bollinger.lower
         };
+        
+        console.log(`${price.symbol} 指標:`, {
+          現在価格: price.price.toLocaleString(),
+          RSI: rsi.toFixed(1),
+          SMA20: sma20.toLocaleString(),
+          ボリンジャー上: bollinger.upper.toLocaleString(),
+          ボリンジャー下: bollinger.lower.toLocaleString()
+        });
         
         const score = TechnicalAnalysis.calculateSignalScore(indicators, price.price);
         
@@ -174,19 +189,6 @@ export const TradeSignals = () => {
         }
       }
       
-      // デバッグ用: 最低1つは買いシグナルを表示
-      if (newSignals.filter(s => s.action === 'BUY').length === 0 && prices.length > 0) {
-        const topPrice = prices[0];
-        newSignals[0] = {
-          symbol: topPrice.symbol,
-          action: 'BUY',
-          score: 75,
-          reasons: ['デモ: 現在の市場状況は買い時', `24h変動: ${topPrice.change24h.toFixed(1)}%`],
-          suggestedAmount: 50000,
-          confidence: 'MEDIUM',
-          timestamp: new Date()
-        };
-      }
       
       updateSignals(newSignals);
       console.log('Final signals:', newSignals);
