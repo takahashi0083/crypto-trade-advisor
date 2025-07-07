@@ -26,6 +26,9 @@ export interface TradeSignal {
   suggestedPercentage?: number; // 売却時の保有割合
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
   timestamp: Date;
+  indicators?: {
+    rsi?: number;
+  };
 }
 
 export interface TechnicalIndicators {

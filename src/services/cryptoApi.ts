@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { CryptoPrice } from '../types/crypto';
 
 const BINANCE_API = 'https://api.binance.com/api/v3';
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'SOLUSDT', 'DOGEUSDT', 'MATICUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'LTCUSDT', 'BCHUSDT', 'ADAUSDT'];
 
 export class CryptoApiService {
   static async getPrices(): Promise<CryptoPrice[]> {

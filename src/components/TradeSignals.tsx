@@ -7,6 +7,7 @@ import { NotificationService } from '../utils/notifications';
 import { SoundNotification } from '../utils/soundNotification';
 import { LineNotification } from '../utils/lineNotification';
 import { LineNotificationAlert } from './LineNotificationAlert';
+import { MarketAnalysis } from './MarketAnalysis';
 import './TradeSignals.css';
 
 export const TradeSignals = () => {
@@ -109,7 +110,10 @@ export const TradeSignals = () => {
           suggestedAmount: action === 'BUY' ? 50000 : undefined,
           suggestedPercentage: action === 'SELL' ? 30 : undefined,
           confidence: score > 80 ? 'HIGH' : score > 60 ? 'MEDIUM' : 'LOW',
-          timestamp: new Date()
+          timestamp: new Date(),
+          indicators: {
+            rsi: Math.round(rsi)
+          }
         };
         
         newSignals.push(signal);
@@ -208,6 +212,8 @@ export const TradeSignals = () => {
           onClose={() => setLineAlert(null)}
         />
       )}
+      
+      <MarketAnalysis />
       
       {fearGreedIndex && (
         <div className={`fear-greed-index ${fearGreedIndex.value < 25 ? 'fear' : fearGreedIndex.value > 75 ? 'greed' : 'neutral'}`}>
