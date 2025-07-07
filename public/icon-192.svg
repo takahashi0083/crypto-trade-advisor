@@ -1,0 +1,5 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" fill="#1a1a1a"/>
+  <text x="96" y="96" font-family="Arial, sans-serif" font-size="80" font-weight="bold" text-anchor="middle" fill="#00ff88" dominant-baseline="middle">₿</text>
+  <path d="M 58 134 L 77 115 L 96 125 L 115 96 L 134 106" stroke="#00ff88" stroke-width="4" fill="none"/>
+</svg>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Service Worker Cleanup</title>
+</head>
+<body>
+    <h1>Service Worker クリーンアップ</h1>
+    <button onclick="cleanup()">クリーンアップ実行</button>
+    <div id="status"></div>
+    
+    <script>
+        async function cleanup() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'クリーンアップ中...';
+            
+            try {
+                // Service Workerを削除
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for(let registration of registrations) {
+                    await registration.unregister();
+                }
+                
+                // キャッシュを削除
+                const cacheNames = await caches.keys();
+                await Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                );
+                
+                status.innerHTML = '✅ クリーンアップ完了！<br>ブラウザを再起動してください。';
+            } catch(e) {
+                status.innerHTML = '❌ エラー: ' + e.message;
+            }
+        }
+        
+        // 自動実行
+        cleanup();
+    </script>
+</body>
+</html>

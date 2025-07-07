@@ -1,0 +1,103 @@
+.notification-setup {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border: 2px solid #2196F3;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.notification-setup h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: #1565C0;
+}
+
+.notification-setup p {
+  margin: 0.5rem 0;
+  color: #333;
+}
+
+.setup-button {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 1rem 0;
+  transition: all 0.3s ease;
+}
+
+.setup-button:hover {
+  background: #1976D2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.notification-setup.success {
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  border-color: #4CAF50;
+}
+
+.notification-setup.success h3 {
+  color: #2E7D32;
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.instructions {
+  margin-top: 1.5rem;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.instructions h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.instructions ol {
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.instructions li {
+  margin-bottom: 0.25rem;
+}
+
+.alternative-option {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.alternative-option h4 {
+  color: #1565C0;
+  margin-bottom: 0.5rem;
+}
+
+.alternative-option label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.alternative-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}

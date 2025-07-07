@@ -1,0 +1,98 @@
+.simple-line-notify {
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  border: 2px solid #00C300;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.simple-line-notify h3 {
+  margin: 0 0 1rem 0;
+  color: #00C300;
+}
+
+
+.webhook-option {
+  padding: 1rem 0;
+}
+
+.webhook-option h4 {
+  margin: 0 0 0.5rem 0;
+  color: #00C300;
+}
+
+.webhook-option p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+details {
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+}
+
+details ol {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.webhook-setup {
+  margin-top: 1rem;
+}
+
+.webhook-setup input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.webhook-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.webhook-actions button {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.webhook-actions button:first-child {
+  background: #00C300;
+  color: white;
+}
+
+.webhook-actions button:last-child {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.webhook-actions button:hover {
+  opacity: 0.8;
+}
+
+.test-result {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f0f0f0;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  text-align: center;
+}

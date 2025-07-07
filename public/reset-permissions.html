@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知設定リセット</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px 0;
+            width: 100%;
+            cursor: pointer;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f0f0f0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #cce5ff; color: #004085; }
+    </style>
+</head>
+<body>
+    <h1>通知設定のリセット</h1>
+    
+    <div id="status" class="status info">
+        現在の通知設定を確認中...
+    </div>
+    
+    <button class="button" onclick="checkPermission()">通知状態を確認</button>
+    <button class="button" onclick="requestPermission()">通知を許可する</button>
+    <button class="button" onclick="testNotification()">テスト通知を送信</button>
+    
+    <h2>手動での解除方法</h2>
+    
+    <h3>iPhone (Safari)</h3>
+    <ol>
+        <li>設定 → Safari → 通知</li>
+        <li>このサイトを探して「許可」に変更</li>
+        <li>または「履歴とWebサイトデータを消去」してリセット</li>
+    </ol>
+    
+    <h3>Android (Chrome)</h3>
+    <ol>
+        <li>Chrome → 設定 → サイトの設定 → 通知</li>
+        <li>ブロックリストからこのサイトを削除</li>
+        <li>またはアドレスバーの鍵アイコンから権限を変更</li>
+    </ol>
+    
+    <script>
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        function checkPermission() {
+            if (!('Notification' in window)) {
+                updateStatus('このブラウザは通知をサポートしていません', 'error');
+                return;
+            }
+            
+            const permission = Notification.permission;
+            switch (permission) {
+                case 'granted':
+                    updateStatus('✅ 通知は許可されています', 'success');
+                    break;
+                case 'denied':
+                    updateStatus('❌ 通知がブロックされています。ブラウザの設定から手動で許可してください', 'error');
+                    break;
+                case 'default':
+                    updateStatus('通知はまだ許可されていません。「通知を許可する」ボタンを押してください', 'info');
+                    break;
+            }
+        }
+        
+        async function requestPermission() {
+            if (!('Notification' in window)) {
+                updateStatus('このブラウザは通知をサポートしていません', 'error');
+                return;
+            }
+            
+            if (Notification.permission === 'denied') {
+                updateStatus('通知がブロックされています。上記の手順で手動で解除してください', 'error');
+                return;
+            }
+            
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    updateStatus('✅ 通知が許可されました！', 'success');
+                } else {
+                    updateStatus('通知が許可されませんでした', 'error');
+                }
+            } catch (error) {
+                updateStatus('エラー: ' + error.message, 'error');
+            }
+        }
+        
+        function testNotification() {
+            if (Notification.permission !== 'granted') {
+                updateStatus('先に通知を許可してください', 'error');
+                return;
+            }
+            
+            new Notification('テスト通知', {
+                body: '通知が正常に動作しています！',
+                icon: '/icon.svg'
+            });
+            
+            updateStatus('テスト通知を送信しました', 'success');
+        }
+        
+        // 初期チェック
+        checkPermission();
+    </script>
+</body>
+</html>

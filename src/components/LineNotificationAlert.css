@@ -1,0 +1,146 @@
+.line-notification-alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.alert-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.alert-content h3 {
+  margin: 0 0 1rem 0;
+  color: #00C300;
+  font-size: 1.5rem;
+}
+
+.alert-content > p {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.message-box {
+  background: #f5f5f5;
+  border: 2px solid #00C300;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.message-box pre {
+  margin: 0;
+  font-family: -apple-system, sans-serif;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.alert-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.copy-button {
+  padding: 0.875rem;
+  background: #00C300;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.copy-button:hover {
+  background: #00A000;
+}
+
+.copy-button.copied {
+  background: #4CAF50;
+}
+
+.line-button {
+  padding: 0.875rem;
+  background: #00B900;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.line-button:hover {
+  background: #009900;
+}
+
+.close-button {
+  padding: 0.875rem;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: #e0e0e0;
+}
+
+.alert-note {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.alert-note p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* モバイル対応 */
+@media (max-width: 600px) {
+  .alert-content {
+    padding: 1.5rem;
+    width: 95%;
+  }
+  
+  .message-box {
+    max-height: 150px;
+  }
+}
