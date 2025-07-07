@@ -38,7 +38,7 @@ export const TradeSignals = () => {
         }
         
         // 終値の配列を作成（JPY換算）
-        const USD_TO_JPY = 150;
+        const USD_TO_JPY = 157;
         const historicalPrices = historicalData.map((d: any) => d.close * USD_TO_JPY);
         
         // テクニカル指標の計算
@@ -105,7 +105,7 @@ export const TradeSignals = () => {
         const signal: TradeSignal = {
           symbol: price.symbol,
           action,
-          score: action === 'HOLD' ? 50 : score,
+          score: score, // 実際の計算されたスコアを使用
           reasons,
           suggestedAmount: action === 'BUY' ? 50000 : undefined,
           suggestedPercentage: action === 'SELL' ? 30 : undefined,
