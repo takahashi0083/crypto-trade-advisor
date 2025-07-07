@@ -40,6 +40,7 @@ export interface TechnicalIndicators {
   macd: number;
   bollingerUpper: number;
   bollingerLower: number;
+  priceChange24h?: number;
 }
 
 export interface NotificationSettings {
