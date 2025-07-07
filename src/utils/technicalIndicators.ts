@@ -16,7 +16,9 @@ export class TechnicalAnalysis {
     let gains = 0;
     let losses = 0;
     
-    for (let i = 1; i <= period; i++) {
+    // 最新のperiod本を使って計算（配列の最後から）
+    const startIndex = prices.length - period - 1;
+    for (let i = startIndex + 1; i < prices.length; i++) {
       const difference = prices[i] - prices[i - 1];
       if (difference > 0) {
         gains += difference;
@@ -27,8 +29,14 @@ export class TechnicalAnalysis {
     
     const avgGain = gains / period;
     const avgLoss = losses / period;
-    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    
+    if (avgLoss === 0) return 100;
+    if (avgGain === 0) return 0;
+    
+    const rs = avgGain / avgLoss;
+    const rsi = 100 - (100 / (1 + rs));
+    
+    return Math.round(rsi * 10) / 10; // 小数点1位に丸める
   }
   
   // 単純移動平均

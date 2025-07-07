@@ -57,15 +57,32 @@ export const TradeSignals = () => {
           continue;
         }
         
+        // 履歴データの確認
+        console.log(`${price.symbol} 履歴データ:`, {
+          データ数: historicalData.length,
+          最新価格: historicalData[historicalData.length - 1].close,
+          最古価格: historicalData[0].close,
+          最新タイムスタンプ: new Date(historicalData[historicalData.length - 1].timestamp).toLocaleString('ja-JP')
+        });
+        
         // 終値の配列を作成（JPY換算）
         const USD_TO_JPY = 157;
         const historicalPrices = historicalData.map((d: any) => d.close * USD_TO_JPY);
+        
+        // 最新価格を現在価格に更新（リアルタイム反映）
+        historicalPrices[historicalPrices.length - 1] = price.price;
         
         // テクニカル指標の計算
         const rsi = TechnicalAnalysis.calculateRSI(historicalPrices);
         const sma20 = TechnicalAnalysis.calculateSMA(historicalPrices, 20);
         const sma50 = historicalPrices.length >= 50 ? TechnicalAnalysis.calculateSMA(historicalPrices, 50) : sma20;
         const bollinger = TechnicalAnalysis.calculateBollingerBands(historicalPrices);
+        
+        console.log(`${price.symbol} RSI計算データ:`, {
+          価格配列長: historicalPrices.length,
+          最新価格: historicalPrices[historicalPrices.length - 1],
+          直近5価格: historicalPrices.slice(-5).map(p => Math.round(p))
+        });
         
         const indicators = {
           rsi,
