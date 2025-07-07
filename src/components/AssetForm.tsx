@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
+import { CryptoApiService } from '../services/cryptoApi';
 import type { CryptoAsset } from '../types/crypto';
 import './AssetForm.css';
 
@@ -26,18 +27,56 @@ export const AssetForm = () => {
   const [formData, setFormData] = useState({
     symbol: 'BTC',
     amount: '',
-    purchaseDate: getTodayJST()
+    purchaseDate: getTodayJST(),
+    purchaseTime: '12:00'
   });
   
+  const [priceMode, setPriceMode] = useState<'current' | 'historical'>('current');
+  const [historicalPrice, setHistoricalPrice] = useState<number | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  
+  // 過去の価格を取得
+  const fetchHistoricalPrice = async () => {
+    setIsLoadingPrice(true);
+    try {
+      // 日付と時刻を組み合わせてDateオブジェクトを作成
+      const dateTime = new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00`);
+      const price = await CryptoApiService.getPriceAtDateTime(formData.symbol, dateTime);
+      
+      if (price) {
+        setHistoricalPrice(price);
+        alert(`${dateTime.toLocaleString('ja-JP')}の価格を取得しました: ¥${price.toLocaleString()}`);
+      } else {
+        alert('指定された日時の価格データが見つかりませんでした。');
+      }
+    } catch (error) {
+      alert('価格の取得に失敗しました。');
+      console.error(error);
+    } finally {
+      setIsLoadingPrice(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 選択された通貨の現在価格を取得
-    const currentPrice = prices.find(p => p.symbol === formData.symbol);
+    let purchasePrice: number;
     
-    if (!currentPrice) {
-      alert('現在の価格を取得できません。しばらくお待ちください。');
-      return;
+    if (priceMode === 'current') {
+      // 現在価格を使用
+      const currentPrice = prices.find(p => p.symbol === formData.symbol);
+      if (!currentPrice) {
+        alert('現在の価格を取得できません。しばらくお待ちください。');
+        return;
+      }
+      purchasePrice = currentPrice.price;
+    } else {
+      // 過去の価格を使用
+      if (!historicalPrice) {
+        alert('過去の価格を取得してください。');
+        return;
+      }
+      purchasePrice = historicalPrice;
     }
     
     const newAsset: CryptoAsset = {
@@ -45,8 +84,8 @@ export const AssetForm = () => {
       symbol: formData.symbol,
       name: CRYPTO_OPTIONS.find(c => c.symbol === formData.symbol)?.name || formData.symbol,
       amount: parseFloat(formData.amount),
-      purchasePrice: currentPrice.price, // アプリ内の現在価格を使用
-      purchaseDate: new Date(formData.purchaseDate)
+      purchasePrice,
+      purchaseDate: new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00`)
     };
     
     addAsset(newAsset);
@@ -55,8 +94,11 @@ export const AssetForm = () => {
     setFormData({
       symbol: 'BTC',
       amount: '',
-      purchaseDate: getTodayJST()
+      purchaseDate: getTodayJST(),
+      purchaseTime: '12:00'
     });
+    setHistoricalPrice(null);
+    setPriceMode('current');
     setIsOpen(false);
   };
   
@@ -110,25 +152,83 @@ export const AssetForm = () => {
           </div>
           
           <div className="form-group">
-            <label>現在価格（アプリ内価格）</label>
-            <div className="current-price-display">
-              {(() => {
-                const price = prices.find(p => p.symbol === formData.symbol);
-                return price ? (
-                  <div>
-                    <div className="price-main">
-                      ¥{price.price.toLocaleString()}
-                    </div>
-                    <small style={{ color: '#666' }}>
-                      1{formData.symbol}あたりの価格
-                    </small>
-                  </div>
-                ) : (
-                  <div style={{ color: '#999' }}>価格を取得中...</div>
-                );
-              })()}
+            <label>価格設定方法</label>
+            <div className="price-mode-toggle">
+              <button
+                type="button"
+                className={`mode-btn ${priceMode === 'current' ? 'active' : ''}`}
+                onClick={() => {
+                  setPriceMode('current');
+                  setHistoricalPrice(null);
+                }}
+              >
+                現在価格を使用
+              </button>
+              <button
+                type="button"
+                className={`mode-btn ${priceMode === 'historical' ? 'active' : ''}`}
+                onClick={() => setPriceMode('historical')}
+              >
+                過去の価格を取得
+              </button>
             </div>
           </div>
+          
+          {priceMode === 'current' ? (
+            <div className="form-group">
+              <label>現在価格（アプリ内価格）</label>
+              <div className="current-price-display">
+                {(() => {
+                  const price = prices.find(p => p.symbol === formData.symbol);
+                  return price ? (
+                    <div>
+                      <div className="price-main">
+                        ¥{price.price.toLocaleString()}
+                      </div>
+                      <small style={{ color: '#666' }}>
+                        1{formData.symbol}あたりの価格
+                      </small>
+                    </div>
+                  ) : (
+                    <div style={{ color: '#999' }}>価格を取得中...</div>
+                  );
+                })()}
+              </div>
+            </div>
+          ) : (
+            <div className="historical-price-section">
+              <div className="form-group">
+                <label>取得したい価格の時刻</label>
+                <input
+                  type="time"
+                  value={formData.purchaseTime}
+                  onChange={(e) => setFormData({ ...formData, purchaseTime: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <button
+                type="button"
+                className="fetch-price-button"
+                onClick={fetchHistoricalPrice}
+                disabled={isLoadingPrice}
+              >
+                {isLoadingPrice ? '取得中...' : '過去の価格を取得'}
+              </button>
+              
+              {historicalPrice && (
+                <div className="historical-price-display">
+                  <label>取得した価格</label>
+                  <div className="price-main">
+                    ¥{historicalPrice.toLocaleString()}
+                  </div>
+                  <small style={{ color: '#666' }}>
+                    {new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00`).toLocaleString('ja-JP')}時点
+                  </small>
+                </div>
+              )}
+            </div>
+          )}
           
           <div className="form-group">
             <label>購入日</label>
@@ -159,7 +259,7 @@ export const AssetForm = () => {
           })()}
           
           <button type="submit" className="submit-button">
-            現在価格で記録する
+            {priceMode === 'current' ? '現在価格で記録する' : '選択した価格で記録する'}
           </button>
         </form>
       )}

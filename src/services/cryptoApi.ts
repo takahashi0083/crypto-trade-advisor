@@ -81,6 +81,69 @@ export class CryptoApiService {
     }
   }
   
+  // 特定の日時の価格を取得
+  static async getPriceAtDateTime(symbol: string, dateTime: Date): Promise<number | null> {
+    try {
+      // 指定日時の前後1時間のデータを取得
+      const endTime = dateTime.getTime() + 60 * 60 * 1000; // 1時間後
+      const startTime = dateTime.getTime() - 60 * 60 * 1000; // 1時間前
+      
+      const response = await axios.get(`${BINANCE_API}/klines`, {
+        params: {
+          symbol: `${symbol}USDT`,
+          interval: '1m', // 1分足で精度を高める
+          startTime,
+          endTime,
+          limit: 120 // 2時間分
+        }
+      });
+      
+      if (response.data.length === 0) {
+        // データがない場合は日足で再試行
+        const dayResponse = await axios.get(`${BINANCE_API}/klines`, {
+          params: {
+            symbol: `${symbol}USDT`,
+            interval: '1d',
+            startTime: dateTime.getTime() - 7 * 24 * 60 * 60 * 1000, // 7日前から
+            endTime: dateTime.getTime() + 24 * 60 * 60 * 1000, // 1日後まで
+            limit: 10
+          }
+        });
+        
+        if (dayResponse.data.length > 0) {
+          const closestCandle = dayResponse.data[0];
+          const priceInUSD = parseFloat(closestCandle[4]); // 終値
+          const usdJpyRate = await this.getUSDJPYRate();
+          return priceInUSD * usdJpyRate;
+        }
+        return null;
+      }
+      
+      // 指定時刻に最も近いデータを探す
+      const targetTime = dateTime.getTime();
+      let closestCandle = response.data[0];
+      let minDiff = Math.abs(closestCandle[0] - targetTime);
+      
+      for (const candle of response.data) {
+        const diff = Math.abs(candle[0] - targetTime);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestCandle = candle;
+        }
+      }
+      
+      const priceInUSD = parseFloat(closestCandle[4]); // 終値を使用
+      const usdJpyRate = await this.getUSDJPYRate();
+      
+      console.log(`${symbol} at ${dateTime.toLocaleString()}: $${priceInUSD} × ¥${usdJpyRate} = ¥${priceInUSD * usdJpyRate}`);
+      
+      return priceInUSD * usdJpyRate;
+    } catch (error) {
+      console.error('過去の価格取得エラー:', error);
+      return null;
+    }
+  }
+  
   // Fear & Greed Index (Alternative.me API)
   static async getFearGreedIndex() {
     try {
