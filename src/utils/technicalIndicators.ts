@@ -15,11 +15,14 @@ export class TechnicalAnalysis {
     
     let gains = 0;
     let losses = 0;
+    const changes: number[] = [];
     
     // 最新のperiod本を使って計算（配列の最後から）
     const startIndex = prices.length - period - 1;
     for (let i = startIndex + 1; i < prices.length; i++) {
       const difference = prices[i] - prices[i - 1];
+      changes.push(difference);
+      
       if (difference > 0) {
         gains += difference;
       } else {
@@ -29,6 +32,17 @@ export class TechnicalAnalysis {
     
     const avgGain = gains / period;
     const avgLoss = losses / period;
+    
+    // デバッグ情報を時々出力
+    if (Math.random() < 0.1) { // 10%の確率でログ出力
+      console.log('RSI計算詳細:', {
+        period,
+        使用価格数: period + 1,
+        最新価格変化: changes.slice(-3).map(c => c.toFixed(1)),
+        平均上昇: avgGain.toFixed(2),
+        平均下落: avgLoss.toFixed(2)
+      });
+    }
     
     if (avgLoss === 0) return 100;
     if (avgGain === 0) return 0;

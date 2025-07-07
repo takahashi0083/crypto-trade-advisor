@@ -58,11 +58,17 @@ export const TradeSignals = () => {
         }
         
         // 履歴データの確認
+        const now = Date.now();
+        const lastDataTime = historicalData[historicalData.length - 1].timestamp;
+        const dataAge = (now - lastDataTime) / (1000 * 60); // 分単位
+        
         console.log(`${price.symbol} 履歴データ:`, {
           データ数: historicalData.length,
           最新価格: historicalData[historicalData.length - 1].close,
           最古価格: historicalData[0].close,
-          最新タイムスタンプ: new Date(historicalData[historicalData.length - 1].timestamp).toLocaleString('ja-JP')
+          最新タイムスタンプ: new Date(lastDataTime).toLocaleString('ja-JP'),
+          データ経過時間: `${dataAge.toFixed(1)}分前`,
+          データが古い: dataAge > 30 // 30分以上古いか
         });
         
         // 終値の配列を作成（JPY換算）
@@ -70,7 +76,14 @@ export const TradeSignals = () => {
         const historicalPrices = historicalData.map((d: any) => d.close * USD_TO_JPY);
         
         // 最新価格を現在価格に更新（リアルタイム反映）
+        const originalLastPrice = historicalPrices[historicalPrices.length - 1];
         historicalPrices[historicalPrices.length - 1] = price.price;
+        
+        console.log(`${price.symbol} 価格更新:`, {
+          元の最新価格: Math.round(originalLastPrice),
+          現在の価格: Math.round(price.price),
+          変化率: ((price.price - originalLastPrice) / originalLastPrice * 100).toFixed(3) + '%'
+        });
         
         // テクニカル指標の計算
         const rsi = TechnicalAnalysis.calculateRSI(historicalPrices);
@@ -81,7 +94,12 @@ export const TradeSignals = () => {
         console.log(`${price.symbol} RSI計算データ:`, {
           価格配列長: historicalPrices.length,
           最新価格: historicalPrices[historicalPrices.length - 1],
-          直近5価格: historicalPrices.slice(-5).map((p: number) => Math.round(p))
+          直近5価格: historicalPrices.slice(-5).map((p: number) => Math.round(p)),
+          価格変化: historicalPrices.slice(-3).map((p: number, i: number, arr: number[]) => {
+            if (i === 0) return '基準';
+            const change = ((p - arr[i-1]) / arr[i-1] * 100).toFixed(2);
+            return `${change}%`;
+          })
         });
         
         const indicators = {
