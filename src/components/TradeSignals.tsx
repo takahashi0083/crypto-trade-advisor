@@ -132,8 +132,10 @@ export const TradeSignals = () => {
         const asset = assets.find(a => a.symbol === price.symbol);
         const profitPercent = asset ? ((price.price - asset.purchasePrice) / asset.purchasePrice) * 100 : 0;
         
-        let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
-        let reasons: string[] = [];
+        let buyAction = false;
+        let sellAction = false;
+        let buyReasons: string[] = [];
+        let sellReasons: string[] = [];
         
         // 過去のスコアから動的しきい値を計算
         // 本来は過去のスコア履歴を保存して使用すべきですが、今回は簡易的に現在の指標から計算
@@ -184,30 +186,30 @@ export const TradeSignals = () => {
         });
         
         if (buyCondition) {
-          action = 'BUY';
+          buyAction = true;
           
           // 保有状態に応じたメッセージ
           if (asset) {
-            reasons.push(`追加購入推奨 (現在の含み損益: ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%)`);
+            buyReasons.push(`追加購入推奨 (現在の含み損益: ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(1)}%)`);
           }
           
           // マルチタイムフレーム分析の理由
           if (compositeSignal.action === 'BUY' && compositeSignal.confidence > 70) {
-            reasons.push(...compositeSignal.reasons);
+            buyReasons.push(...compositeSignal.reasons);
           }
           
-          if (rsi < 25) reasons.push(`RSI: ${rsi.toFixed(0)} (極度の売られすぎ)`);
-          else if (rsi < 35) reasons.push(`RSI: ${rsi.toFixed(0)} (売られすぎ)`);
-          if (price.price < bollinger.lower) reasons.push('ボリンジャーバンド下限突破');
-          if (fgi && fgi.value < 20) reasons.push(`市場心理: 極度の恐怖 (${fgi.value})`);
-          else if (fgi && fgi.value < 30) reasons.push(`市場心理: ${fgi.classification}`);
-          if (price.change24h < -10) reasons.push(`大幅下落: ${price.change24h.toFixed(1)}%`);
-          else if (price.change24h < -5) reasons.push(`24h変動: ${price.change24h.toFixed(1)}%`);
-          if (compositeScore > 80) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (非常に強い買いシグナル)`);
-          else if (compositeScore > thresholds.buy) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (買いシグナル)`);
+          if (rsi < 25) buyReasons.push(`RSI: ${rsi.toFixed(0)} (極度の売られすぎ)`);
+          else if (rsi < 35) buyReasons.push(`RSI: ${rsi.toFixed(0)} (売られすぎ)`);
+          if (price.price < bollinger.lower) buyReasons.push('ボリンジャーバンド下限突破');
+          if (fgi && fgi.value < 20) buyReasons.push(`市場心理: 極度の恐怖 (${fgi.value})`);
+          else if (fgi && fgi.value < 30) buyReasons.push(`市場心理: ${fgi.classification}`);
+          if (price.change24h < -10) buyReasons.push(`大幅下落: ${price.change24h.toFixed(1)}%`);
+          else if (price.change24h < -5) buyReasons.push(`24h変動: ${price.change24h.toFixed(1)}%`);
+          if (compositeScore > 80) buyReasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (非常に強い買いシグナル)`);
+          else if (compositeScore > thresholds.buy) buyReasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (買いシグナル)`);
         }
         
-        // 売りシグナル
+        // 売りシグナル（保有資産がある場合のみ）
         if (asset) {
           const sellCondition = compositeScore < thresholds.sell || 
                                (compositeSignal.action === 'SELL' && compositeSignal.confidence > 70) ||
@@ -216,32 +218,57 @@ export const TradeSignals = () => {
                                rsi > 75;
           
           if (sellCondition) {
-            action = 'SELL';
+            sellAction = true;
             
             // マルチタイムフレーム分析の理由
             if (compositeSignal.action === 'SELL' && compositeSignal.confidence > 70) {
-              reasons.push(...compositeSignal.reasons);
+              sellReasons.push(...compositeSignal.reasons);
             }
             
-            if (rsi > 75) reasons.push(`RSI: ${rsi.toFixed(0)} (極度の買われすぎ)`);
-            else if (rsi > 65) reasons.push(`RSI: ${rsi.toFixed(0)} (買われすぎ)`);
-            if (profitPercent > 50) reasons.push(`大幅利益 +${profitPercent.toFixed(1)}% (利確推奨)`);
-            else if (profitPercent > 30) reasons.push(`利益率 +${profitPercent.toFixed(1)}%達成`);
-            if (profitPercent < -15) reasons.push(`損失 ${profitPercent.toFixed(1)}% (損切り推奨)`);
-            if (price.price > bollinger.upper) reasons.push('ボリンジャーバンド上限突破');
-            if (fgi && fgi.value > 80) reasons.push(`市場心理: 極度の欲望 (${fgi.value})`);
-            else if (fgi && fgi.value > 70) reasons.push(`市場心理: ${fgi.classification}`);
-            if (compositeScore < 20) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (非常に強い売りシグナル)`);
-            else if (compositeScore < thresholds.sell) reasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (売りシグナル)`);
+            if (rsi > 75) sellReasons.push(`RSI: ${rsi.toFixed(0)} (極度の買われすぎ)`);
+            else if (rsi > 65) sellReasons.push(`RSI: ${rsi.toFixed(0)} (買われすぎ)`);
+            if (profitPercent > 50) sellReasons.push(`大幅利益 +${profitPercent.toFixed(1)}% (利確推奨)`);
+            else if (profitPercent > 30) sellReasons.push(`利益率 +${profitPercent.toFixed(1)}%達成`);
+            if (profitPercent < -15) sellReasons.push(`損失 ${profitPercent.toFixed(1)}% (損切り推奨)`);
+            if (price.price > bollinger.upper) sellReasons.push('ボリンジャーバンド上限突破');
+            if (fgi && fgi.value > 80) sellReasons.push(`市場心理: 極度の欲望 (${fgi.value})`);
+            else if (fgi && fgi.value > 70) sellReasons.push(`市場心理: ${fgi.classification}`);
+            if (compositeScore < 20) sellReasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (非常に強い売りシグナル)`);
+            else if (compositeScore < thresholds.sell) sellReasons.push(`総合スコア: ${compositeScore.toFixed(0)}/100 (売りシグナル)`);
           }
         }
         
+        // アクションと理由を決定
+        let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
+        let reasons: string[] = [];
+        
+        // 優先度: 売り > 買い > 様子見
+        if (sellAction && buyAction) {
+          // 両方のシグナルがある場合は、利益率で判定
+          if (profitPercent > 10) {
+            action = 'SELL';
+            reasons = sellReasons;
+            reasons.unshift('利益が出ているため売りを優先');
+          } else {
+            action = 'BUY';
+            reasons = buyReasons;
+            reasons.unshift('まだ利益が少ないため追加購入を優先');
+          }
+        } else if (sellAction) {
+          action = 'SELL';
+          reasons = sellReasons;
+        } else if (buyAction) {
+          action = 'BUY';
+          reasons = buyReasons;
+        }
+        
+        // メインシグナルを作成
         const signal: TradeSignal = {
           symbol: price.symbol,
           action,
-          score: Math.round(compositeScore), // 総合スコアを使用
-          reasons: [...new Set(reasons)], // 重複を除去
-          suggestedAmount: action === 'BUY' ? (asset ? 30000 : 50000) : undefined, // 追加購入は少なめ
+          score: Math.round(compositeScore),
+          reasons: [...new Set(reasons)],
+          suggestedAmount: action === 'BUY' ? (asset ? 30000 : 50000) : undefined,
           suggestedPercentage: action === 'SELL' ? 30 : undefined,
           confidence: compositeScore > 80 ? 'HIGH' : compositeScore > 60 ? 'MEDIUM' : 'LOW',
           timestamp: new Date(),
@@ -249,6 +276,28 @@ export const TradeSignals = () => {
             rsi: Math.round(rsi)
           }
         };
+        
+        // 両方のシグナルがある場合は、サブシグナルも作成
+        if (sellAction && buyAction && asset) {
+          const subAction = action === 'BUY' ? 'SELL' : 'BUY';
+          const subReasons = action === 'BUY' ? sellReasons : buyReasons;
+          
+          const subSignal: TradeSignal = {
+            symbol: price.symbol,
+            action: subAction,
+            score: Math.round(compositeScore),
+            reasons: [...new Set(subReasons)],
+            suggestedAmount: subAction === 'BUY' ? 30000 : undefined,
+            suggestedPercentage: subAction === 'SELL' ? 30 : undefined,
+            confidence: 'MEDIUM',
+            timestamp: new Date(),
+            indicators: {
+              rsi: Math.round(rsi)
+            }
+          };
+          
+          newSignals.push(subSignal);
+        }
         
         newSignals.push(signal);
         console.log('Signal generated:', { 
@@ -265,60 +314,41 @@ export const TradeSignals = () => {
         
         if (notificationSettings.enabled) {
           // 買いシグナル通知
-          console.log(`${price.symbol} 通知判定:`, {
-            action,
-            compositeScore: compositeScore.toFixed(1),
-            over_threshold: compositeScore > thresholds.buy,
-            notifications_enabled: notificationSettings.buySignals,
-            will_notify: action === 'BUY' && compositeScore > thresholds.buy && notificationSettings.buySignals
-          });
-          
-          if (action === 'BUY' && compositeScore > thresholds.buy && notificationSettings.buySignals) {
-            // クールダウンチェック
+          if (buyAction && compositeScore > thresholds.buy && notificationSettings.buySignals) {
             if (NotificationCooldown.canSendNotification(price.symbol, 'BUY')) {
-              NotificationService.showBuySignal(price.symbol, compositeScore, reasons[0] || '強い買いシグナル');
+              const message = asset ? '追加購入推奨' : '買い推奨';
+              NotificationService.showBuySignal(price.symbol, compositeScore, buyReasons[0] || message);
               SoundNotification.playNotificationSound('buy');
               
-              // LINE通知を自動送信
               const lineMessage = LineNotification.generateBuyMessage(
                 price.symbol, 
                 compositeScore, 
-                reasons[0] || '強い買いシグナル',
+                buyReasons[0] || message,
                 price.price
               );
               LineNotification.sendNotification(lineMessage);
               
-              // 通知を記録
               NotificationCooldown.recordNotification(price.symbol, 'BUY');
               addAlertToHistory(signal);
-            } else {
-              const remaining = NotificationCooldown.getRemainingCooldown(price.symbol, 'BUY');
-              console.log(`${price.symbol} 買いシグナル通知はクールダウン中（残り${Math.floor(remaining / 60)}分）`);
             }
           }
           
-          // 売りシグナル通知（重要度高）
-          if (action === 'SELL' && asset && notificationSettings.sellSignals) {
-            // クールダウンチェック
+          // 売りシグナル通知
+          if (sellAction && asset && notificationSettings.sellSignals) {
             if (NotificationCooldown.canSendNotification(price.symbol, 'SELL')) {
-              NotificationService.showSellSignal(price.symbol, profitPercent, reasons[0] || '売却推奨');
+              NotificationService.showSellSignal(price.symbol, profitPercent, sellReasons[0] || '売却推奨');
               SoundNotification.playNotificationSound('sell');
               
-              // LINE通知を自動送信
               const lineMessage = LineNotification.generateSellMessage(
                 price.symbol,
                 profitPercent,
-                reasons[0] || '売却推奨',
+                sellReasons[0] || '売却推奨',
                 price.price
               );
               LineNotification.sendNotification(lineMessage);
               
-              // 通知を記録
               NotificationCooldown.recordNotification(price.symbol, 'SELL');
               addAlertToHistory(signal);
-            } else {
-              const remaining = NotificationCooldown.getRemainingCooldown(price.symbol, 'SELL');
-              console.log(`${price.symbol} 売りシグナル通知はクールダウン中（残り${Math.floor(remaining / 60)}分）`);
             }
           }
           
