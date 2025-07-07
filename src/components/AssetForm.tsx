@@ -39,8 +39,8 @@ export const AssetForm = () => {
   const fetchHistoricalPrice = async () => {
     setIsLoadingPrice(true);
     try {
-      // 日付と時刻を組み合わせてDateオブジェクトを作成
-      const dateTime = new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00`);
+      // 日付と時刻を組み合わせて日本時間でDateオブジェクトを作成
+      const dateTime = new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00+09:00`);
       const price = await CryptoApiService.getPriceAtDateTime(formData.symbol, dateTime);
       
       if (price) {
@@ -85,7 +85,7 @@ export const AssetForm = () => {
       name: CRYPTO_OPTIONS.find(c => c.symbol === formData.symbol)?.name || formData.symbol,
       amount: parseFloat(formData.amount),
       purchasePrice,
-      purchaseDate: new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00`)
+      purchaseDate: new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00+09:00`)
     };
     
     addAsset(newAsset);
@@ -223,7 +223,7 @@ export const AssetForm = () => {
                     ¥{historicalPrice.toLocaleString()}
                   </div>
                   <small style={{ color: '#666' }}>
-                    {new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00`).toLocaleString('ja-JP')}時点
+                    {new Date(`${formData.purchaseDate}T${formData.purchaseTime}:00+09:00`).toLocaleString('ja-JP')}時点
                   </small>
                 </div>
               )}
@@ -231,7 +231,7 @@ export const AssetForm = () => {
           )}
           
           <div className="form-group">
-            <label>購入日</label>
+            <label>購入日（日本時間）</label>
             <input
               type="date"
               value={formData.purchaseDate}
@@ -239,6 +239,9 @@ export const AssetForm = () => {
               max={getTodayJST()}
               required
             />
+            <small style={{ color: '#666', fontSize: '0.8rem' }}>
+              すべての日時は日本時間（JST）で記録されます
+            </small>
           </div>
           
           {formData.amount && (() => {
