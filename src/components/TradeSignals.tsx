@@ -81,7 +81,7 @@ export const TradeSignals = () => {
         console.log(`${price.symbol} RSI計算データ:`, {
           価格配列長: historicalPrices.length,
           最新価格: historicalPrices[historicalPrices.length - 1],
-          直近5価格: historicalPrices.slice(-5).map(p => Math.round(p))
+          直近5価格: historicalPrices.slice(-5).map((p: number) => Math.round(p))
         });
         
         const indicators = {
