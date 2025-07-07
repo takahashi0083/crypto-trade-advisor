@@ -56,6 +56,7 @@ export const Settings = () => {
                 />
                 買いシグナル通知
               </label>
+              <small>※スコア75以上、RSI20以下、-15%以上の下落時のみ</small>
             </div>
             
             <div className="setting-item">
@@ -67,6 +68,7 @@ export const Settings = () => {
                 />
                 売りシグナル通知
               </label>
+              <small>※スコア25以下、RSI80以上、±50%以上、-20%以下時のみ</small>
             </div>
             
             <div className="setting-item">

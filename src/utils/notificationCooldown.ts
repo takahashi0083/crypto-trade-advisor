@@ -10,10 +10,10 @@ export class NotificationCooldown {
   
   // クールダウン時間の設定（ミリ秒）
   private static readonly COOLDOWN_PERIODS = {
-    BUY: 60 * 60 * 1000,      // 1時間
-    SELL: 30 * 60 * 1000,     // 30分
-    PROFIT: 4 * 60 * 60 * 1000, // 4時間
-    LOSS: 2 * 60 * 60 * 1000    // 2時間
+    BUY: 6 * 60 * 60 * 1000,      // 6時間
+    SELL: 3 * 60 * 60 * 1000,     // 3時間
+    PROFIT: 12 * 60 * 60 * 1000,  // 12時間
+    LOSS: 6 * 60 * 60 * 1000      // 6時間
   };
   
   // 通知が可能かチェック

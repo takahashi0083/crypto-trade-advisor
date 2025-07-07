@@ -26,6 +26,14 @@
   margin-bottom: 1rem;
 }
 
+.setting-item small {
+  display: block;
+  margin-top: 0.25rem;
+  margin-left: 1.5rem;
+  color: #666;
+  font-size: 0.75rem;
+}
+
 /* トグルスイッチ */
 .toggle-label {
   position: relative;

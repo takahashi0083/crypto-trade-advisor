@@ -313,8 +313,15 @@ export const TradeSignals = () => {
         console.log(`${price.symbol} 通知設定:`, notificationSettings);
         
         if (notificationSettings.enabled) {
-          // 買いシグナル通知
-          if (buyAction && compositeScore > thresholds.buy && notificationSettings.buySignals) {
+          // 買いシグナル通知（より厳格な条件）
+          const strongBuySignal = buyAction && (
+            compositeScore > 75 || // スコア75以上
+            rsi < 20 || // RSIが20以下の極度の売られすぎ
+            (price.change24h < -15) || // 24時間で-15%以上の下落
+            (fgi && fgi.value < 15) // Fear&Greedが15以下
+          );
+          
+          if (strongBuySignal && notificationSettings.buySignals) {
             if (NotificationCooldown.canSendNotification(price.symbol, 'BUY')) {
               const message = asset ? '追加購入推奨' : '買い推奨';
               NotificationService.showBuySignal(price.symbol, compositeScore, buyReasons[0] || message);
@@ -333,8 +340,16 @@ export const TradeSignals = () => {
             }
           }
           
-          // 売りシグナル通知
-          if (sellAction && asset && notificationSettings.sellSignals) {
+          // 売りシグナル通知（より厳格な条件）
+          const strongSellSignal = sellAction && asset && (
+            compositeScore < 25 || // スコア25以下
+            rsi > 80 || // RSIが80以上の極度の買われすぎ
+            profitPercent > 50 || // 50%以上の利益
+            profitPercent < -20 || // 20%以上の損失
+            (fgi && fgi.value > 85) // Fear&Greedが85以上
+          );
+          
+          if (strongSellSignal && notificationSettings.sellSignals) {
             if (NotificationCooldown.canSendNotification(price.symbol, 'SELL')) {
               NotificationService.showSellSignal(price.symbol, profitPercent, sellReasons[0] || '売却推奨');
               SoundNotification.playNotificationSound('sell');
