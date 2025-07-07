@@ -73,7 +73,7 @@ const WebhookSetup = () => {
     }
 
     try {
-      const serverUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001';
+      const serverUrl = import.meta.env.PROD ? '' : 'http://localhost:3001';
       const response = await fetch(`${serverUrl}/api/test-webhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

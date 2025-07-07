@@ -1,4 +1,4 @@
-const SERVER_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001';
+const SERVER_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 export class LineNotification {
   // 自動で通知を送信（Webhook対応）

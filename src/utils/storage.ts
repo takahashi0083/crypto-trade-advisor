@@ -1,6 +1,6 @@
 // LocalStorageとサーバーストレージの抽象化レイヤー
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 export class Storage {
   static async getItem(key: string): Promise<string | null> {
