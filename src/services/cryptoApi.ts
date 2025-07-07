@@ -4,22 +4,31 @@ import type { CryptoPrice } from '../types/crypto';
 const BINANCE_API = 'https://api.binance.com/api/v3';
 // BinanceにはJPYペアがないため、USDTペアを使用
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'LTCUSDT', 'BCHUSDT', 'ADAUSDT'];
-// 各通貨の実際の価格に近づけるための調整係数（実際の市場価格とBinance価格の差を考慮）
-const PRICE_ADJUSTMENTS: { [key: string]: number } = {
-  BTC: 1.0,
-  ETH: 1.0,
-  XRP: 3.35,  // XRPは実際の価格が約3.35倍
-  LTC: 1.0,
-  BCH: 1.0,
-  ADA: 1.0
-};
 
 export class CryptoApiService {
+  // リアルタイムの為替レートを取得
+  static async getUSDJPYRate(): Promise<number> {
+    try {
+      // 無料の為替レートAPI（日次更新）
+      const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+      const rate = response.data.rates.JPY;
+      console.log('Current USD/JPY rate:', rate);
+      return rate;
+    } catch (error) {
+      console.error('為替レート取得エラー、デフォルト値を使用:', error);
+      return 157; // フォールバック値
+    }
+  }
+
   static async getPrices(): Promise<CryptoPrice[]> {
     try {
       console.log('Fetching prices from Binance API...');
-      const response = await axios.get(`${BINANCE_API}/ticker/24hr`);
-      const allTickers = response.data;
+      // 並列で取得
+      const [tickerResponse, usdJpyRate] = await Promise.all([
+        axios.get(`${BINANCE_API}/ticker/24hr`),
+        this.getUSDJPYRate()
+      ]);
+      const allTickers = tickerResponse.data;
       console.log('Received tickers:', allTickers.length);
       
       return SYMBOLS.map(symbol => {
@@ -28,12 +37,15 @@ export class CryptoApiService {
         
         const baseSymbol = symbol.replace('USDT', '');
         const priceInUSD = parseFloat(ticker.lastPrice);
-        // USD to JPY conversion (実際の為替レート)
-        const USD_TO_JPY = 157; // 2025年1月現在の概算レート
-        const adjustment = PRICE_ADJUSTMENTS[baseSymbol] || 1.0;
+        
+        // デバッグ情報
+        if (baseSymbol === 'XRP') {
+          console.log(`XRP Debug - USD Price: ${priceInUSD}, JPY Rate: ${usdJpyRate}, Final: ${priceInUSD * usdJpyRate}`);
+        }
+        
         return {
           symbol: baseSymbol,
-          price: priceInUSD * USD_TO_JPY * adjustment, // Convert to JPY with adjustment
+          price: priceInUSD * usdJpyRate, // リアルタイム為替レートで変換
           change24h: parseFloat(ticker.priceChangePercent),
           volume24h: parseFloat(ticker.volume),
           lastUpdate: new Date()
